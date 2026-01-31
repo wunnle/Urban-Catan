@@ -16,17 +16,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Domain check - only allow registrations from urbanroastery.com
+    // Domain check - only allow registrations from allowed domains
     const referer = request.headers.get("referer") || "";
     const origin = request.headers.get("origin") || "";
-    const isAllowedDomain = 
-      referer.includes("urbanroastery.com") || 
-      origin.includes("urbanroastery.com") ||
-      referer.includes("localhost") ||
-      origin.includes("localhost");
+    const allowedDomains = [
+      "urbanroastery.com",
+      "localhost",
+      "vercel.app",  // Vercel preview URLs
+    ];
+    const isAllowedDomain = allowedDomains.some(
+      (domain) => referer.includes(domain) || origin.includes(domain)
+    );
     
     if (!isAllowedDomain) {
       // Return success but don't actually register (demo/unauthorized access)
+      console.log("Blocked domain - referer:", referer, "origin:", origin);
       return NextResponse.json<RegistrationResponse>(
         { success: true, message: "Turnuvaya başarıyla kaydoldunuz!" },
         { status: 201 }
@@ -83,6 +87,12 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Registration error:", error);
+    
+    // Log more details for debugging
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
 
     return NextResponse.json<RegistrationResponse>(
       {
