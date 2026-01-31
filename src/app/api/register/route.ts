@@ -16,6 +16,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Domain check - only allow registrations from urbanroastery.com
+    const referer = request.headers.get("referer") || "";
+    const origin = request.headers.get("origin") || "";
+    const isAllowedDomain = 
+      referer.includes("urbanroastery.com") || 
+      origin.includes("urbanroastery.com") ||
+      referer.includes("localhost") ||
+      origin.includes("localhost");
+    
+    if (!isAllowedDomain) {
+      // Return success but don't actually register (demo/unauthorized access)
+      return NextResponse.json<RegistrationResponse>(
+        { success: true, message: "Turnuvaya başarıyla kaydoldunuz!" },
+        { status: 201 }
+      );
+    }
+
     // Validate required fields
     if (!name || !name.trim()) {
       return NextResponse.json<RegistrationResponse>(
